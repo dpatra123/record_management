@@ -1,0 +1,227 @@
+{% extends 'common.html' %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="container-fluid">
+        <div class="row page-titles">
+            <div class="col-md-5 col-4 align-self-center">
+                <h4 style="color: #009efb">Certificate Mangement</h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-5 col-xlg-5 col-md-5">
+                <div class="card">
+                    <ul class="nav nav-tabs profile-tab" role="tablist">
+                        <li class="nav-item"> <a class="nav-link active" data-toggle="tab" href="#settings" role="tab">Upload your CSR file here</a> </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="settings" role="tabpanel">
+                            <div class="card-block">
+                                <form class="form-horizontal form-material">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label class="col-md-12">Certificate Name<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-md-12">
+                                            <input type="text" placeholder="Enter Certificate name"  v-model="certName" class="form-control form-control-line">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="col-md-12" id="hide">
+                                            <div >
+                                                <div class="form-group" id="upload_button">
+                                                <label>
+                                                    <input type="file" id="cert_file">
+                                                </label>
+                                                <i class="fa fa-circle-o-notch fa-spin pull-right" style="font-size:24px" v-if="isFileUploading == 'uploading'"></i>
+                                                <i class="fa fa-thumbs-up pull-right" style="font-size:24px; color: rgb(58, 208, 173)" v-if="isFileUploading == 'uploaded'"></i>
+                                                <i class="fa fa-info-circle pull-right" style="font-size:24px; color: #EF4C67" v-if="isFileUploading == 'failed'"></i>
+                                                </div>
+                                                <div class="btn btn-info pull-right" v-on:click="uploadCert();">Upload</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7 col-xlg-7 col-md-7">
+                <div class="card">
+                    <div class="card-block">
+                        <h4 class="card-title" style="color: #009efb"> Download signed certificates<span style="color: #26c6da; font-size: 12px; margin-left: 15px;">(<b>${certCount}</b> Certificates)</span></h4><hr/>
+                        <div class="table-responsive">
+                            <p v-if="certCount == 0"> No certificates found.</p>
+                            {% csrf_token %}
+                            <table class="table" v-if="certCount > 0">
+                                <thead>
+                                    <tr>
+                                        <th style="color: #009efb;background: lightblue;border-radius: 3px 0px 0px 3px;" >Certificate Name</th>
+                                        <th style="color: #009efb;background: lightblue;border-radius: 0px 3px 3px 0px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="certName in certNames">
+                                        <td>${ certName }</td>
+                                        <td>
+                                            <span><i class="mdi mdi-download" style="color: #1BC4A2;"></i><a href="" v-on:click="downloadCert(certName)" class="">Download</a></span>
+                                            <span style="color:  #009efb; margin-left: 10px; margin-right: 5px;">|</span>
+                                            <span><i class="mdi mdi-delete" style="color: #FB5C8B;"></i><a href="" data-toggle="modal" v-on:click="deleteCert(certName)" data-target="#exampleModal">Delete</a></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        var vueApp = new Vue({
+            el: '#app',
+            delimiters: ['${', '}'],
+            data: {
+                certName:'',
+                isFileUploading : '',
+                certNames:[],
+                certCount:null
+            },
+
+            components: {
+                    'vue-toastr': window.vueToastr
+            },
+
+            computed: {
+            },
+
+            filters: {
+            },
+
+            methods: {
+                uploadCert: function(){
+                    var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+                    var file_data = $("#cert_file");
+                    var file_data = $("#cert_file").prop("files")[0];
+                    if(vueApp.certName == ''){
+                        alert("Please enter the certificate name!");
+                        return false;
+                    }
+                    if(file_data == undefined){
+                        alert("Please browse the certificate and click on upload button.");
+                        return false;
+                    }
+                    vueApp.$toastr.Add({
+                        title: 'Information',
+                        timeout: 10000,
+                        msg: "Uploading certificate ...",
+                        clickClose: true,
+                        position: 'toast-bottom-right',
+                        type: 'info'
+                    });
+                    var form_data = new FormData();
+                    vueApp.isFileUploading = 'uploading';
+                    form_data.append("file", file_data);
+                    form_data.append("certName", vueApp.certName);
+                    $.ajax({
+                        type: "POST",
+                        url: '/ajax/uploadCert/',
+                        async: true,
+                        cache: true,
+                        processData: false,
+                        contentType: false,
+                        data: form_data,
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                        },
+                        complete: function () {
+                        },
+                        success: function (response) {
+                            vueApp.$toastr.Add({
+                                title: 'Information',
+                                timeout: 30000,
+                                msg: response.message,
+                                clickClose: true,
+                                position: 'toast-bottom-right',
+                                type: 'success'
+                            });
+                            vueApp.isFileUploading = 'uploaded';
+                            vueApp.certNames = response.certNames;
+                            vueApp.certCount = response.certCount;
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            vueApp.$toastr.Add({
+                                title: 'Error',
+                                timeout: 30000,
+                                msg: JSON.parse(jqXHR.responseText).message,
+                                clickClose: true,
+                                position: 'toast-bottom-right',
+                                type: 'error'
+                            });
+                            vueApp.isFileUploading = 'failed';
+                            console.log(jqXHR);
+                        }
+                    });
+                },
+                deleteCert: function(certName){
+                    var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+                    $.ajax({
+                        type: "POST",
+                        url: '/ajax/deleteCert/',
+                        async: true,
+                        cache: true,
+                        data: {'certName':certName},
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                        },
+                        complete: function () {
+                        },
+                        success: function (response) {
+                            vueApp.$toastr.Add({
+                                title: 'Success',
+                                timeout: 30000,
+                                msg: response.message,
+                                clickClose: true,
+                                position: 'toast-bottom-right',
+                                type: 'success'
+                            });
+                            vueApp.certNames = response.certNames;
+                            vueApp.certCount = response.certCount;
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            vueApp.$toastr.Add({
+                                title: 'Error',
+                                timeout: 30000,
+                                msg: JSON.parse(jqXHR.responseText).message,
+                                clickClose: true,
+                                position: 'toast-bottom-right',
+                                type: 'error'
+                            });
+                        }
+                    });
+                },
+                downloadCert: function(certName){
+                   window.open('download-cert?file='+certName); 
+                }
+            },
+
+            watch: {},
+
+            mounted: function(){
+                var tempCertNames = "{{ certList|safe }}";
+                tempCertNames = tempCertNames.replace(/'/g, '"');
+                this.certNames = JSON.parse(tempCertNames);
+                this.certCount = "{{ certCount }}"
+            },
+
+            created: function(){
+            }
+        });
+    </script>
+{% endblock %}

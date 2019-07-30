@@ -1,0 +1,433 @@
+{% extends 'common.html' %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="container-fluid">
+        <div class="row page-titles">
+                <div class="col-md-5 col-4 align-self-center">
+                        <h4 style="color: #009efb">Add a new record</h4>
+                </div>
+                <div class="col-md-7 col-4 align-self-center">
+                <a href="/myrecords/" class="btn waves-effect waves-light btn-success pull-right hidden-sm-down"> View records</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-8 col-xlg-8 col-md-8">
+                <div class="card">
+                    <ul class="nav nav-tabs profile-tab" role="tablist">
+                        <li class="nav-item"> <a class="nav-link active" data-toggle="tab" href="#settings" role="tab">Fill the details</a> </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="settings" role="tabpanel">
+                            <div class="card-block">
+                                <form class="form-horizontal form-material">
+                                {% csrf_token %}
+                                    <div class="form-group">
+                                        <label class="col-md-12">State<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-md-12">
+                                            <select id="state" class="form-control form-control-line"  v-model="stateName" v-on:change="fetchDist(stateName)">
+                                                {% for k, v in sdmap.items %}
+                                                        <option>{{k}}</option>
+                                                {% endfor %}                          
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-12">District<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-md-12">
+                                            <select id="district" class="form-control form-control-line"  v-model="districtName">
+                                              <option v-for="dist in distList">${ dist }</option>                                           
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-12">Institution Type<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-sm-12">
+                                                <blockquote class="m-t-8" style="padding:10px; margin: 1rem;">
+                                                        {% for k, v in itnmap.items %}
+                                                                <input type = "radio" name = "instType" v-model="institutionType" id = "{{ k }}" value = "{{ k }}" v-on:change="fetchInstitution(institutionType)">
+                                                                <label for = "{{ k }}">{{ k }} </label><br/>
+                                                        {% endfor %}
+                                                        <input type = "radio" name = "instType" v-model="institutionType" id = "pcurl" value = "otherInst" v-on:click="toogleInst('otherInst')">
+                                                        <label for = "pcurl" style="">Other Institution</label>  
+                                                </blockquote>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" v-if="showInstText == false">
+                                        <label class="col-sm-12">Institution Name<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-md-12">
+                                            <select id="institutionName" class="form-control form-control-line"  v-model="institutionName">
+                                              <option v-for="intn in instList" >${ intn }</option>                                           
+                                            </select>
+                                        </div>
+                                    </div>
+                                     <div class="form-group" v-if="showInstText == true">
+                                        <label class="col-sm-12">Institution Name<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-md-12">
+                                            <input type="text" placeholder="Enter Institution name"  v-model="institutionName" class="form-control form-control-line">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-md-12">Petitioner Name<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-md-12">
+                                                <input type="text" placeholder="Enter Petitioner name"  v-model="petitionerName" class="form-control form-control-line">
+                                                <div class="btn btn-info pull-right" style="margin-top:10px;" v-on:click="addPetitioner(petitionerName)">Add</div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-md-12">Petitioner List<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-md-12">
+                                            <div v-for="pt in ptList"> 
+                                              <div style="color:#26c6da;background-color:#E4FBFE;padding:7px;margin:5px;border:1px solid;border-radius:4px;">${pt}<i class="mdi mdi-close-circle pull-right" v-on:click="removePetitioner(pt)" style="color:red;font-size:19px;"></i></div>
+                                        </div>     
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-12">Case Type<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-sm-12">
+                                                <blockquote class="m-t-8" style="padding:10px; margin: 1rem;">
+                                                        {% for k in casetypes %}
+                                                                <input type = "radio" name = "ctype" v-model="caseType" id = "{{ k }}" value = "{{ k }}">
+                                                                <label for = "{{ k }}" style="margin-right:40px;">{{ k }} </label>
+                                                        {% endfor %}
+                                                </blockquote>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-md-12">Case Number<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-md-12">
+                                                <input type="text" placeholder="Enter case number"  v-model="caseNumber" class="form-control form-control-line">
+                                        </div> 
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-md-12">File Number<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-md-12">
+                                                <input type="text" placeholder="Enter File number"  v-model="fileNumber" class="form-control form-control-line">
+                                        </div> 
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-12">Counter Filed<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-sm-12">
+                                                <blockquote class="m-t-8" style="padding:10px; margin: 1rem;">
+                                                        <input type = "radio" name = "cfiled" v-model="isCounterFiled" id = "cfiledy" value = "cfiledy">
+                                                        <label for = "cfiledy" style="margin-right:40px;">Yes</label>
+                                                        <input type = "radio" name = "cfiled" v-model="isCounterFiled" id = "cfiledn" value = "cfiledn">
+                                                        <label for = "cfiledn" style="margin-right:40px;">No</label>
+                                                </blockquote>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" v-if="isCounterFiled == 'cfiledy'">
+                                        <div class="col-md-12">
+                                                <div class="col-md-5" style="float:left;">
+                                                        <label class="col-md-12" style="margin-left:-15px;">Enter Letter Number<span style="color: red; margin: 5px;">*</span></label>
+                                                        <input type="text" placeholder="Enter Letter Number"  v-model="ltrNoCf" class="form-control form-control-line">
+                                                </div> 
+                                                <div class="col-md-5 pull-left">
+                                                        <label class="col-md-12" style="margin-left:-15px;">Enter Date<span style="color: red; margin: 5px;">*</span></label>
+                                                        <input type="date" placeholder="Enter date of order"  v-model="dtOfOrCf" class="form-control form-control-line">
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-md-12">Date of Order<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-md-12">
+                                                <input type="date" placeholder="Enter date of order"  v-model="dateOfOrder" class="form-control form-control-line">
+                                        </div> 
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-12">Memorandum Sought from DHE ?<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-sm-12">
+                                                <blockquote class="m-t-8" style="padding:10px; margin: 1rem;">
+                                                        <input type = "radio" name = "memsought" v-model="isMmemorandumSought" id = "memsoughty" value = "memsoughty">
+                                                        <label for = "memsoughty" style="margin-right:40px;">Yes</label>
+                                                        <input type = "radio" name = "memsought" v-model="isMmemorandumSought" id = "memsoughtn" value = "memsoughtn">
+                                                        <label for = "memsoughtn" style="margin-right:40px;">No</label>
+                                                </blockquote>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" v-if="isMmemorandumSought == 'memsoughty'">
+                                        <div class="col-md-12">
+                                                <div class="col-md-5" style="float:left;">
+                                                        <label class="col-md-12" style="margin-left:-15px;">Enter Letter Number<span style="color: red; margin: 5px;">*</span></label>
+                                                        <input type="text" placeholder="Enter date of order"  v-model="ltrNoMs" class="form-control form-control-line">
+                                                </div> 
+                                                <div class="col-md-5 pull-left">
+                                                        <label class="col-md-12" style="margin-left:-15px;">Enter Date<span style="color: red; margin: 5px;">*</span></label>
+                                                        <input type="date" placeholder="Enter date of order"  v-model="dtMs" class="form-control form-control-line">
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-12">Memorandum Received from DHE ?<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-sm-12">
+                                                <blockquote class="m-t-8" style="padding:10px; margin: 1rem;">
+                                                        <input type = "radio" name = "memrec" v-model="isMmemorandumReceived" id = "memrecy" value = "memrecy">
+                                                        <label for = "memrecy" style="margin-right:40px;">Yes</label>
+                                                        <input type = "radio" name = "memrec" v-model="isMmemorandumReceived" id = "memrecn" value = "memrecn">
+                                                        <label for = "memrecn" style="margin-right:40px;">No</label>
+                                                </blockquote>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" v-if="isMmemorandumReceived == 'memrecy'">
+                                        <div class="col-md-12">
+                                                <div class="col-md-5" style="float:left;">
+                                                        <label class="col-md-12" style="margin-left:-15px;">Enter Letter Number<span style="color: red; margin: 5px;">*</span></label>
+                                                        <input type="text" placeholder="Enter date of order"  v-model="ltrNoMr" class="form-control form-control-line">
+                                                </div> 
+                                                <div class="col-md-5 pull-left">
+                                                        <label class="col-md-12" style="margin-left:-15px;">Enter Date<span style="color: red; margin: 5px;">*</span></label>
+                                                        <input type="date" placeholder="Enter date of order"  v-model="dtMr" class="form-control form-control-line">
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-12">Status of Compliance<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-sm-12">
+                                                <blockquote class="m-t-8" style="padding:10px; margin: 1rem;">
+                                                        <input type = "radio" name = "statusofc" v-model="statusOfCompliance" id = "statusofcy" value = "statusofcy">
+                                                        <label for = "statusofcy" style="margin-right:40px;">Accepted</label>
+                                                        <input type = "radio" name = "statusofc" v-model="statusOfCompliance" id = "statusofcn" value = "statusofcn">
+                                                        <label for = "statusofcn" style="margin-right:40px;">Rejected</label>
+                                                </blockquote>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" v-if="statusOfCompliance == 'statusofcy'">
+                                        <div class="col-md-12">
+                                                <div class="col-md-5" style="float:left;">
+                                                        <label class="col-md-12" style="margin-left:-15px;">Enter Letter Number<span style="color: red; margin: 5px;">*</span></label>
+                                                        <input type="text" placeholder="Enter date of order"  v-model="ltrNoSc" class="form-control form-control-line">
+                                                </div> 
+                                                <div class="col-md-5 pull-left">
+                                                        <label class="col-md-12" style="margin-left:-15px;">Enter Date<span style="color: red; margin: 5px;">*</span></label>
+                                                        <input type="date" placeholder="Enter date of order"  v-model="dtSc" class="form-control form-control-line">
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-12">FAO Filed ?<span style="color: red; margin: 5px;">*</span></label>
+                                        <div class="col-sm-12">
+                                                <blockquote class="m-t-8" style="padding:10px; margin: 1rem;">
+                                                        <input type = "radio" name = "faofiled" v-model="isFAOFiled" id = "faofiledy" value = "faofiledy">
+                                                        <label for = "faofiledy" style="margin-right:40px;">Yes</label>
+                                                        <input type = "radio" name = "faofiled" v-model="isFAOFiled" id = "faofiledn" value = "faofiledn">
+                                                        <label for = "faofiledn" style="margin-right:40px;">No</label>
+                                                </blockquote>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" v-if="isFAOFiled == 'faofiledy'">
+                                        <div class="col-md-12">
+                                                <div class="col-md-5" style="float:left;">
+                                                        <label class="col-md-12" style="margin-left:-15px;">Enter Letter Number<span style="color: red; margin: 5px;">*</span></label>
+                                                        <input type="text" placeholder="Enter date of order"  v-model="ltrNoFAO" class="form-control form-control-line">
+                                                </div> 
+                                                <div class="col-md-5 pull-left">
+                                                        <label class="col-md-12" style="margin-left:-15px;">Enter Date<span style="color: red; margin: 5px;">*</span></label>
+                                                        <input type="date" placeholder="Enter date of order"  v-model="dtFAO" class="form-control form-control-line">
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="col-md-12">
+                                        <div class="btn btn-success pull-right" v-on:click="validateSettings()">Submit</div>
+                                        <div class="btn btn-info pull-right" style="margin-right:10px;" v-on:click="">Validate</div><br/>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-xlg-4 col-md-4">
+                <div class="card">
+                    <ul class="nav nav-tabs profile-tab" role="tablist">
+                        <li class="nav-item"> <a class="nav-link active" data-toggle="tab" href="#settings" role="tab">Filled Details</a> </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="settings" role="tabpanel">
+                            <div class="card-block">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+        <script>
+                var vueApp = new Vue({
+                        el: '#app',
+                        delimiters: ['${', '}'],
+                        data: {
+                                stateName:'',
+                                districtName:'',
+                                institutionType:'',
+                                institutionName:'',
+                                petitionerName:'',
+                                caseType:'',
+                                caseNumber:'',
+                                fileNumber:'',
+                                isCounterFiled:false,
+                                letterNumber:'',
+                                dateLine:'',
+                                dateOfOrder:'',
+                                isMmemorandumSought:false,
+                                isMmemorandumReceived:false,
+                                statusOfCompliance:'',
+                                isFAOFiled:false,
+                                sdm_map_info:'',
+                                inst_map_info:'',
+                                distList:[],
+                                instList:[],
+                                ptList:[],
+                                showInstText:false,
+                                ltrNoCf:'',
+                                dtOfOrCf:'',
+                                ltrNoMs:'',
+                                dtMs:'',
+                                ltrNoMr:'',
+                                dtMr:'',
+                                ltrNoSc:'',
+                                dtSc:'',
+                                ltrNoFAO:'',
+                                dtFAO:'',
+                                validated:false,
+                        },
+
+                        components: {
+                                'vue-toastr': window.vueToastr
+                        },
+
+                        computed: {
+                        },
+
+                        filters: {
+                        },
+
+                        methods: {
+                                validateSettings: function(){
+                                        if(this.stateName == '' ){
+                                                alert("Please fill the required fields");
+                                                vueApp.validated = false;
+                                                return false;
+                                        }
+                                        else{
+                                                vueApp.validated = true;
+                                        }
+                                        if(vueApp.validated){
+                                                this.saveRecord();
+                                        }else{
+                                                return false;
+                                        }
+                                },
+
+                                saveRecord: function(){
+                                        var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+                                        $.ajax({
+                                                type: "POST",
+                                                url: '/ajax/save_record/',
+                                                async: true,
+                                                cache: true,
+                                                data: {
+                                                        "state": this.stateName,
+                                                        "dist": this.districtName,
+                                                        "institution_type": this.institutionType,
+                                                        "institution_name": this.institutionName,
+                                                        "petitioner_name": this.petitionerName,
+                                                        "case_type": this.caseType,
+                                                        "case_number": this.caseNumber,
+                                                        "file_number": this.fileNumber,
+                                                        "counter_filed": this.isCounterFiled,
+                                                        "cf_lr": this.ltrNoCf,
+                                                        "cf_dt": this.dtOfOrCf,
+                                                        "date_of_order": this.dateOfOrder,
+                                                        "memorandum_sought": this.isMmemorandumSought,
+                                                        "ms_lr": this.ltrNoMs,
+                                                        "ms_dt": this.dtMs,
+                                                        "memorandum_received": this.isMmemorandumReceived,
+                                                        "mr_lr": this.ltrNoMr,
+                                                        "mr_dt": this.dtMr,
+                                                        "status_of_comp": this.statusOfCompliance,
+                                                        "sc_lr": this.ltrNoSc,
+                                                        "sc_dt": this.dtSc,
+                                                        "fao_filed": this.isFAOFiled,
+                                                        "fao_lr": this.ltrNoFAO,
+                                                        "fao_dt": this.dtFAO
+                                                },
+                                                beforeSend: function (xhr) {
+                                                        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                                                },
+                                                complete: function () {
+                                                },
+                                                success: function (response) {
+                                                        console.log(response);
+                                                        vueApp.$toastr.Add({
+                                                                title: 'Sussess!',
+                                                                timeout: 18000,
+                                                                msg: 'Record Saved Successfully',
+                                                                clickClose: true,
+                                                                position: 'toast-bottom-right',
+                                                                type: 'success'
+                                                        });
+                                                },
+                                                error: function (jqXHR, textStatus, errorThrown) {
+                                                        vueApp.$toastr.Add({
+                                                                title: 'Error!',
+                                                                timeout: 18000,
+                                                                msg: JSON.parse(jqXHR.responseText).message,
+                                                                clickClose: true,
+                                                                position: 'toast-bottom-right',
+                                                                type: 'error'
+                                                        });
+                                                }
+                                        });
+                                },
+                                fetchDist:function(state){
+                                        vueApp.distList = this.sdm_map_info[state];
+                                },
+                                fetchInstitution:function(inst_type){
+                                        vueApp.instList = this.inst_map_info[inst_type];
+                                        this.showInstText = false;
+                                },
+                                addPetitioner:function(petitionerName){
+                                        if(!vueApp.ptList.includes(petitionerName)){
+                                                vueApp.ptList.push(petitionerName);
+                                        }else{
+                                                alert("Petitioner already added.");
+                                        }
+                                },
+                                removePetitioner:function(petitionerName){
+                                        var indx = vueApp.ptList.indexOf(petitionerName);
+                                        if(indx > -1){
+                                                vueApp.ptList.splice(indx, 1);
+                                        }
+                                },
+                                toogleInst:function(instType){
+                                       if(instType == 'otherInst'){
+                                               this.showInstText = true;
+                                       }else{
+                                               this.showInstText = false;
+                                       }      
+                                },
+                        },
+
+                        watch: {},
+
+                        mounted: function(){
+                                var sd_info =  "{{ sdmap|safe }}";
+                                var inst_info = "{{ itnmap|safe }}"
+                                var sdm_info = sd_info.replace(/'/g, '"');
+                                var inst_type_info = inst_info.replace(/'/g, '"');
+                                this.sdm_map_info = JSON.parse(sdm_info);
+                                this.inst_map_info = JSON.parse(inst_type_info);
+                        },
+
+                        created: function(){
+                    }
+
+                });
+        </script>
+{% endblock %}
