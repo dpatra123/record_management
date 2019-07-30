@@ -22,11 +22,26 @@
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        
+										<th style="color: #009efb">Record Name</th>
+										<th style="color: #009efb">State</th>
+										<th style="color: #009efb">District</th>
+										<th style="color: #009efb">Date of order</th> 
+										<th style="color: #009efb">Action</th> 
                                     </tr>
                                 </thead>
                                 <tbody>
-                            	
+                            	{% for k,v in my_response.items %}
+									<tr>
+										<td>{{ v.record_name }}</td>
+										<td>{{ v.state }}</td>
+										<td>{{ v.dist }}</td>
+										<td>{{ v.date_of_order }}</td>
+										<td><span><i class="mdi mdi-eye" style="color: #009efb;"></i><a href="" data-toggle="modal" data-target=".bd-example-modal-lg" v-on:click="fetchResult('{{v.record_name}}')">View</a></span> 
+                                        	<span style="color:  #009efb; margin-left: 3px; margin-right: 3px;">|</span>
+                                        	<span><i class="mdi mdi-delete" style="color: #FB5C8B;"></i><a href="" data-toggle="modal" data-target="#exampleModal" v-on:click="recordName='{{v.record_name}}'">Delete</a></span><span style="color:  #009efb; margin-left: 3px; margin-right: 3px;">|</span>
+                                        </td>
+									</tr>
+								{% endfor %}
                                 </tbody>
                             </table>
                         </div>

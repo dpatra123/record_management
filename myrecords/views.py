@@ -6,7 +6,11 @@ from django.core.files.storage import FileSystemStorage
 import re
 
 def myRecords(request):
-    return render(request, "my_records.html",{"name":'My Records', "title": 'My Govt files'})
+    my_records = Records.objects.all()
+    my_response = {}
+    for x in my_records:
+        my_response[x] = x.__dict__
+    return render(request, "my_records.html",{"my_response":my_response})
 
 def myDashboard(request):
     return render(request, "dashboard.html",{"name":'My Records', "title": 'My Govt files'})
@@ -30,6 +34,7 @@ def addRecord(request):
     return render(request, "add_record.html",{"sdmap":ast.literal_eval(json.dumps(state_dist_map)), "itnmap": ast.literal_eval(json.dumps(inst_type_name_map)), "casetypes":case_types})
 
 def saveRecord(request):
+    recordName = request.POST.get('recordName')
     state = request.POST.get('state')
     dist = request.POST.get('dist')
     institution_type = request.POST.get('institution_type')
@@ -55,7 +60,7 @@ def saveRecord(request):
     fao_lr = request.POST.get('fao_lr')
     fao_dt = request.POST.get('fao_dt')
     try:
-        record = Records(state = state, dist = dist, institution_type = institution_type, institution_name = institution_name,
+        record = Records(record_name = recordName, state = state, dist = dist, institution_type = institution_type, institution_name = institution_name,
                      petitioner_name = petitioner_name, case_type = case_type, case_number = case_number, file_number = file_number,
                      counter_filed = counter_filed, cf_lr = cf_lr, cf_dt = cf_dt, date_of_order = date_of_order, memorandum_sought = memorandum_sought,
                      ms_lr = ms_lr, ms_dt = ms_dt, memorandum_received = memorandum_received, mr_lr = mr_lr, mr_dt = mr_dt,

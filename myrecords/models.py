@@ -13,7 +13,7 @@ class BaseModel(models.Model):
 class Records(BaseModel):
     class Meta:
         db_table = 'records'
-
+    record_name = models.CharField("Record Name", max_length=100, null=True, blank=True)
     state = models.CharField("State", max_length=100, null=True, blank=True)
     dist = models.CharField("District", max_length=100, null=True, blank=True)
     institution_type = models.CharField("Institution Type",  max_length=255, blank=True, null=True)
@@ -38,6 +38,8 @@ class Records(BaseModel):
     fao_filed = models.BooleanField(default=False)
     fao_lr = models.CharField("FAO letter no", max_length=100, null=True, blank=True)
     fao_dt = models.DateField(blank=True, null=True,default=datetime.date.today)
+    def __str__(self):
+        return self.record_name
 
 class State(BaseModel):
     class Meta:
